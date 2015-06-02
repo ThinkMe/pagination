@@ -13,7 +13,7 @@ It provides new functionalities:
 
 ## Installation
 
-To `composer.json` add: `"thinkme/pagination": "1.2.*"` and then run `composer update thinkme/pagination`.
+To `composer.json` add: `"thinkme/pagination": "dev-master"` and then run `composer update thinkme/pagination`.
 
 ## Compatibilty
 
