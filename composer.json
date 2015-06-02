@@ -1,5 +1,5 @@
 {
-    "name": "ThinkMe/pagination",
+    "name": "thinkme/pagination",
     "description": "Laravel pagination on steroids",
     "keywords": ["laravel", "pagination"],
     "license": "MIT",
@@ -17,7 +17,7 @@
     },
     "autoload": {
         "psr-0": {
-            "Thinkme\\Pagination": "src/"
+            "ThinkMe\\Pagination": "src/"
         }
     },
     "minimum-stability": "dev",
