@@ -1,0 +1,27 @@
+{
+    "name": "ThinkMe/pagination",
+    "description": "Laravel pagination on steroids",
+    "keywords": ["laravel", "pagination"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "test",
+            "email": "i@yea.im"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "illuminate/support": "5.0.x",
+        "illuminate/pagination": "5.0.x",
+        "illuminate/routing": "5.0.x"
+    },
+    "autoload": {
+        "psr-0": {
+            "Thinkme\\Pagination": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "require-dev": {
+        "mockery/mockery": "0.8.*"
+    }
+}
