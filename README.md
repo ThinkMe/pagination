@@ -39,7 +39,7 @@ This package should not break compatibility with Laravel pagination module.
 ### In controller
 
 ```php
-// example route (app/routes.php)
+// example route (routes.php)
 Route::get('list-{page}.html', ['as' => 'list.page', 'uses' => 'PhotoController@index']);
 
 // use the current route
@@ -63,7 +63,7 @@ Paginator::presenter(function() use ($list) {
 {{-- show item --}}
 @endforeach
 
-{!! $list->links('photos.paginator') !!}
+{!! $list->links('paginator') !!}
 
 // if use yourself Presenter Class
 
