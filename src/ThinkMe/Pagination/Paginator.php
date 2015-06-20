@@ -2,12 +2,13 @@
 
 use Countable;
 use ArrayAccess;
+use Illuminate\Support\Facades\Input;
 use IteratorAggregate;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Collection;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Routing\Route;
+use Route;
 use Illuminate\Routing\Router;
 use Illuminate\Routing\UrlGenerator;
 use Illuminate\Http\Request;
@@ -15,9 +16,11 @@ use Illuminate\Pagination\LengthAwarePaginator as BasePaginator;
 
 class Paginator extends BasePaginator
 {
+  protected $app;
   protected $view;
   protected $request;
   protected $viewName;
+  protected $baseUrl;
   /**
    * @var \Illuminate\Routing\UrlGenerator
    */
@@ -56,20 +59,59 @@ class Paginator extends BasePaginator
 
   /**
    * Create a new paginator instance.
+   */
+  public function __construct()
+  {
+    $this->app = App::getInstance();
+    $this->setView($this->app['view']);
+    $this->setRouter($this->app['router']);
+    $this->setUrlGenerator($this->app['url']);
+    $this->setRequest($this->app['request']);
+  }
+
+  /**
+   * quick paginator.
    *
-   * @param  mixed  $items
-   * @param  int  $total
-   * @param  int  $perPage
-   * @param  int|null  $currentPage
-   * @param  array  $options (path, query, fragment, pageName)
+   * @param  mixed $items
+   * @param  int $total
+   * @param  int $perPage
+   * @param  int|null $currentPage
+   * @param  array $options (path, query, fragment, pageName)
    * @return void
    */
-  public function __construct($items, $total, $perPage, $currentPage = null, array $options = [])
+  public function paginate($builder, $perPage, $currentPage, array $options = [])
+  {
+
+    foreach ($options as $key => $value)
+    {
+      $this->{$key} = $value;
+    }
+
+    $results = $builder->forPage($this->getCurrentPage($currentPage), $perPage)->get();
+
+    if($builder instanceof \Illuminate\Database\Eloquent\Builder) {
+      $total = $builder->getQuery()->getCountForPagination();
+    }
+
+    if($builder instanceof \Illuminate\Database\Query\Builder) {
+      $total = $builder->getCountForPagination();
+    }
+
+    $this->set($results, $total, $perPage, $currentPage);
+
+  }
+
+  public function set($items, $total, $perPage, $currentPage = null, array $options = [])
   {
     foreach ($options as $key => $value)
     {
       $this->{$key} = $value;
     }
+
+    Paginator::currentPageResolver(function() use ($currentPage)
+    {
+      return $this->getCurrentPage($currentPage);
+    });
 
     $this->total = $total;
     $this->perPage = $perPage;
@@ -77,12 +119,22 @@ class Paginator extends BasePaginator
     $this->currentPage = $this->setCurrentPage($currentPage, $this->lastPage);
     $this->path = $this->path != '/' ? rtrim($this->path, '/').'/' : $this->path;
     $this->items = $items instanceof Collection ? $items : Collection::make($items);
-    $app = App::getInstance();
-    $this->setView($app['view']);
-    $this->setRouter($app['router']);
-    $this->setUrlGenerator($app['url']);
-    $this->setRequest($app['request']);
   }
+
+  public function getCurrentPage($currentPage = null)
+  {
+    if($currentPage != null) {
+      return $currentPage;
+    }
+
+    if(null === $this->routeConfig) {
+      return Input::get($this->getPageName());
+    } else {
+      return Route::input($this->getPageName());
+    }
+  }
+
+
   /**
    * @param \Illuminate\Routing\UrlGenerator $generator
    */
@@ -178,7 +230,22 @@ class Paginator extends BasePaginator
   public function url($page) {
 
     if(null === $this->routeConfig) {
-      return parent::url($page);
+      //return parent::url($page);
+      if ($page <= 0) $page = 1;
+
+      // If we have any extra query string key / value pairs that need to be added
+      // onto the URL, we will put them in query string form and then attach it
+      // to the URL. This allows for extra information like sortings storage.
+      $parameters = [$this->pageName => $page];
+
+      if (count($this->query) > 0)
+      {
+        $parameters = array_merge($this->query, $parameters);
+      }
+
+      return $this->getCurrentUrl().'?'
+      .http_build_query($parameters, null, '&')
+      .$this->buildFragment();
     }
 
     $parameters = $this->routeConfig['parameters'];
@@ -346,5 +413,26 @@ class Paginator extends BasePaginator
    */
   public function canShowLastPage() {
     return false === array_search($this->lastPage(), $this->getPagesRange());
+  }
+
+  /**
+   * Get the root URL for the request.
+   *
+   * @return string
+   */
+  public function getCurrentUrl()
+  {
+    return $this->baseUrl ?: $this->request->url();
+  }
+
+  /**
+   * Set the base URL in use by the paginator.
+   *
+   * @param  string  $baseUrl
+   * @return void
+   */
+  public function setBaseUrl($baseUrl)
+  {
+    $this->baseUrl = $baseUrl;
   }
 }

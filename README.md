@@ -43,7 +43,8 @@ This package should not break compatibility with Laravel pagination module.
 Route::get('list-{page}.html', ['as' => 'list.page', 'uses' => 'PhotoController@index']);
 
 // use the current route
-$list = new Paginator($item, $count, 1, $page, [
+$list = new Paginator();
+$list = list->set($item, $count, 1, $page, [
             'path' => Paginator::resolveCurrentPath(),
         ]);
 $list->route('list.page');
