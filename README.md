@@ -44,7 +44,7 @@ Route::get('list-{page}.html', ['as' => 'list.page', 'uses' => 'PhotoController@
 
 // use the current route
 $list = new Paginator();
-$list = list->set($item, $count, 1, $page, [
+$list = list->make($item, $count, 1, $page, [
             'path' => Paginator::resolveCurrentPath(),
         ]);
 $list->route('list.page');
