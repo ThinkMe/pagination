@@ -79,7 +79,7 @@ class Paginator extends BasePaginator
    * @param  array $options (path, query, fragment, pageName)
    * @return void
    */
-  public function paginate($builder, $perPage, $currentPage, array $options = [])
+  public function paginate($builder, $perPage, $currentPage = null, array $options = [])
   {
 
     foreach ($options as $key => $value)
