@@ -20,8 +20,5 @@
             "ThinkMe\\Pagination": "src/"
         }
     },
-    "minimum-stability": "dev",
-    "require-dev": {
-        "mockery/mockery": "0.8.*"
-    }
+    "minimum-stability": "dev"
 }
