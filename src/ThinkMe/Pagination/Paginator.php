@@ -97,11 +97,11 @@ class Paginator extends BasePaginator
       $total = $builder->getCountForPagination();
     }
 
-    $this->set($results, $total, $perPage, $currentPage);
+    $this->make($results, $total, $perPage, $currentPage);
 
   }
 
-  public function set($items, $total, $perPage, $currentPage = null, array $options = [])
+  public function make($items, $total, $perPage, $currentPage = null, array $options = [])
   {
     foreach ($options as $key => $value)
     {
