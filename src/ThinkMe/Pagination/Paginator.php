@@ -60,8 +60,13 @@ class Paginator extends BasePaginator
   /**
    * Create a new paginator instance.
    */
-  public function __construct()
+  public function __construct(array $options = [])
   {
+    foreach ($options as $key => $value)
+    {
+   	  $this->{$key} = $value;
+    }  
+	
     $this->app = App::getInstance();
     $this->setView($this->app['view']);
     $this->setRouter($this->app['router']);
