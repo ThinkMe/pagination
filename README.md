@@ -19,7 +19,7 @@ To `composer.json` add: `"thinkme/pagination": "dev-master"` and then run `compo
 
 This package should not break compatibility with Laravel pagination module.
 
-### Laravel 5.0
+### Laravel 5.0 & 5.1
 
 ## Method overview
 
@@ -50,7 +50,20 @@ $list = list->make($item, $count, 1, $page, [
 $list->route('list.page');
 $list->pagesProximity(3);
 
-// IF use yourself Presenter Class 
+// or quick paginator
+$query = User::select($columns);
+$paginate = new Paginator();
+$paginate->paginate($query, 10);//or $paginate->paginate($query, $perPage, $currentPage);
+//or $list = $paginate ^#*&!^#*!^&*(!&#) You know;
+//return $list
+return $paginate;
+
+//IF you do not want to use the default page name. Example: ?page=1 to ?p=1
+$paginate->paginate($query, $perPage, $currentPage, ['pageName' => 'p']);//http://test.com?p=1
+//or
+$paginate->setPageName('p');
+
+// IF use yourself Presenter Class
 Paginator::presenter(function() use ($list) {
             return new MyPresenter($list);
         });

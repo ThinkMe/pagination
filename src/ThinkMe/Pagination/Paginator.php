@@ -77,12 +77,11 @@ class Paginator extends BasePaginator
   /**
    * quick paginator.
    *
-   * @param  mixed $items
-   * @param  int $total
-   * @param  int $perPage
-   * @param  int|null $currentPage
-   * @param  array $options (path, query, fragment, pageName)
-   * @return void
+   * @param $builder
+   * @param $perPage
+   * @param null $currentPage
+   * @param array $options
+   * @return Collection|static
    */
   public function paginate($builder, $perPage, $currentPage = null, array $options = [])
   {
@@ -102,10 +101,18 @@ class Paginator extends BasePaginator
       $total = $builder->getCountForPagination();
     }
 
-    $this->make($results, $total, $perPage, $currentPage);
+    return $this->make($results, $total, $perPage, $currentPage);
 
   }
 
+  /**
+   * @param $items
+   * @param $total
+   * @param $perPage
+   * @param null $currentPage
+   * @param array $options
+   * @return Collection|static
+   */
   public function make($items, $total, $perPage, $currentPage = null, array $options = [])
   {
     foreach ($options as $key => $value)
@@ -123,9 +130,15 @@ class Paginator extends BasePaginator
     $this->lastPage = (int) ceil($total / $perPage);
     $this->currentPage = $this->setCurrentPage($currentPage, $this->lastPage);
     $this->path = $this->path != '/' ? rtrim($this->path, '/').'/' : $this->path;
-    $this->items = $items instanceof Collection ? $items : Collection::make($items);
+
+    return $this->items = $items instanceof Collection ? $items : Collection::make($items);
+
   }
 
+  /**
+   * @param null $currentPage
+   * @return mixed|null
+   */
   public function getCurrentPage($currentPage = null)
   {
     if($currentPage != null) {
