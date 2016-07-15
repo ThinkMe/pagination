@@ -36,13 +36,16 @@ This package should not break compatibility with Laravel pagination module.
 
 ## Example usage
 
-### In controller
-
+### In router
 ```php
 // example route (routes.php)
 Route::get('list-{page}.html', ['as' => 'list.page', 'uses' => 'PhotoController@index']);
+```
 
-// use the current route
+### In controller
+
+```php
+// IF use the current route
 $list = new Paginator();
 $list = list->make($item, $count, 1, $page, [
             'path' => Paginator::resolveCurrentPath(),
@@ -58,7 +61,7 @@ $paginate->paginate($query, 10);//or $paginate->paginate($query, $perPage, $curr
 //return $list
 return $paginate;
 
-//IF you do not want to use the default page name. Example: ?page=1 to ?p=1
+//IF you do not want to use the default page name. Example: http://test.com?page=1 to http://test.com?p=1
 $paginate->paginate($query, $perPage, $currentPage, ['pageName' => 'p']);//http://test.com?p=1
 //or
 $paginate->setPageName('p');
