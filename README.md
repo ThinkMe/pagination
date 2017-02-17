@@ -19,7 +19,7 @@ To `composer.json` add: `"thinkme/pagination": "dev-master"` and then run `compo
 
 This package should not break compatibility with Laravel pagination module.
 
-### Laravel 5.0 & 5.1
+### Laravel 5.0/5.1/5.2/5.3/5.4
 
 ## Method overview
 
