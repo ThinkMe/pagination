@@ -92,7 +92,8 @@ class Paginator extends BasePaginator
         $results = $builder->forPage($this->getCurrentPage($currentPage), $perPage)->get();
 
         if ($builder instanceof \Illuminate\Database\Eloquent\Builder) {
-            $total = $builder->getQuery()->getCountForPagination();
+            $total = $builder->toBase()->getCountForPagination();
+            //$total = $builder->getQuery()->getCountForPagination();
         }
 
         if ($builder instanceof \Illuminate\Database\Query\Builder) {
