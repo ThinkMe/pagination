@@ -1,7 +1,9 @@
 <?php namespace ThinkMe\Pagination;
 
+use App\Models\Ticket;
 use Countable;
 use ArrayAccess;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Input;
 use IteratorAggregate;
 use Illuminate\Support\Facades\App;
@@ -57,6 +59,10 @@ class Paginator extends BasePaginator
      */
     protected $pagesRange;
 
+    protected $largePageOptimize = 'off';
+    protected $largePageOptimizeTotal = 100000;
+    protected $largePageOptimizeCurrentPage = 1000;
+
     /**
      * Create a new paginator instance.
      */
@@ -89,7 +95,7 @@ class Paginator extends BasePaginator
             $this->{$key} = $value;
         }
 
-        $results = $builder->forPage($this->getCurrentPage($currentPage), $perPage)->get();
+        $total = 0;
 
         if ($builder instanceof \Illuminate\Database\Eloquent\Builder) {
             $total = $builder->toBase()->getCountForPagination();
@@ -100,8 +106,50 @@ class Paginator extends BasePaginator
             $total = $builder->getCountForPagination();
         }
 
-        return $this->make($results, $total, $perPage, $currentPage);
+        if($this->largePageOptimize == 'auto') {
+            if($total >= 100000 and $this->getCurrentPage($currentPage) >= 1000) {
+                $this->largePageOptimize = 'on';
+            } else {
+                $this->largePageOptimize = 'off';
+            }
+        }
 
+        $results = null;
+
+        switch ($this->largePageOptimize) {
+            case 'off':
+                $results = $builder->forPage($this->getCurrentPage($currentPage), $perPage)->get();
+                break;
+            case 'on':
+                $query = clone $builder->getQuery();
+                $model = clone $builder->getModel();
+                $idResult = $model->setQuery($query)->select('id')->limit($perPage)->offset($this->getCurrentPage($currentPage)-1)->pluck('id');
+                $results = $builder->whereIn('id', $idResult->toArray())->get();
+                break;
+        }
+
+        return $this->make($results, $total, $perPage, $currentPage);
+    }
+
+    /**
+     * @param $value
+     */
+    public function setPageOptimize($value) {
+        $this->largePageOptimize = strtolower($value);
+    }
+
+    /**
+     * @param $value
+     */
+    public function setOptimizeTotal($value) {
+        $this->largePageOptimizeTotal = $value;
+    }
+
+    /**
+     * @param $value
+     */
+    public function setOptimizeCurrentPage($value) {
+        $this->largePageOptimizeCurrentPage = $value;
     }
 
     /**
