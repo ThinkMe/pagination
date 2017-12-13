@@ -1,9 +1,7 @@
 <?php namespace ThinkMe\Pagination;
 
-use App\Models\Ticket;
 use Countable;
 use ArrayAccess;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Input;
 use IteratorAggregate;
 use Illuminate\Support\Facades\App;
