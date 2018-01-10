@@ -12,9 +12,9 @@ use Route;
 use Illuminate\Routing\Router;
 use Illuminate\Routing\UrlGenerator;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator as BasePaginator;
+use Illuminate\Pagination\Paginator as BasePaginator;
 
-class Paginator extends BasePaginator
+class SimplePaginator extends BasePaginator
 {
     protected $app;
     protected $view;
@@ -44,13 +44,6 @@ class Paginator extends BasePaginator
     protected $routeConfig;
 
     /**
-     * Page range proximity
-     *
-     * @var integer
-     */
-    protected $pagesProximity;
-
-    /**
      * Cached pages range
      *
      * @var array
@@ -63,6 +56,7 @@ class Paginator extends BasePaginator
     protected $largePageOptimize = self::PAGE_OPTIMIZE_OFF;
     protected $largePageOptimizeTotal = 100000;
     protected $largePageOptimizeCurrentPage = 1000;
+    protected $simple = false;
 
 
     /**
@@ -97,47 +91,20 @@ class Paginator extends BasePaginator
             $this->{$key} = $value;
         }
 
-        $total = 0;
-
-        if ($builder instanceof \Illuminate\Database\Eloquent\Builder) {
-            $total = $builder->toBase()->getCountForPagination();
-        }
-
-        if ($builder instanceof \Illuminate\Database\Query\Builder) {
-            $total = $builder->getCountForPagination();
-        }
-
-        if($this->largePageOptimize == self::PAGE_OPTIMIZE_AUTO) {
-            if($total >= 100000 and $this->getCurrentPage($currentPage) >= 1000) {
-                $this->largePageOptimize = self::PAGE_OPTIMIZE_ON;
-            } else {
-                $this->largePageOptimize = self::PAGE_OPTIMIZE_OFF;
-            }
-        }
-
         $results = null;
-
         switch ($this->largePageOptimize) {
             case self::PAGE_OPTIMIZE_OFF:
-                $results = $builder->forPage($this->getCurrentPage($currentPage), $perPage)->get();
+                $results = $builder->forPage($this->getCurrentPage($currentPage), $perPage + 1)->get();
                 break;
             case self::PAGE_OPTIMIZE_ON:
                 $query = clone $builder->getQuery();
                 $model = clone $builder->getModel();
-                $idResult = $model->setQuery($query)->select('id')->limit($perPage)->offset($this->getCurrentPage($currentPage)-1)->pluck('id');
+                $idResult = $model->setQuery($query)->select('id')->limit($perPage + 1)->offset($this->getCurrentPage($currentPage)-1)->pluck('id');
                 $results = $builder->whereIn('id', $idResult->toArray())->get();
                 break;
         }
 
-        return $this->make($results, $total, $perPage, $currentPage);
-    }
-
-
-    /**
-     * @param $value
-     */
-    public function simple($value) {
-        $this->simple = $value;
+        return $this->make($results, $perPage, $currentPage);
     }
 
     /**
@@ -162,14 +129,13 @@ class Paginator extends BasePaginator
     }
 
     /**
-     * @param array|mixed $items
-     * @param $total
+     * @param $items
      * @param $perPage
      * @param null $currentPage
      * @param array $options
-     * @return array|Collection|mixed|static
+     * @return object
      */
-    public function make($items, $total, $perPage, $currentPage = null, array $options = [])
+    public function make($items, $perPage, $currentPage = null, array $options = [])
     {
         foreach ($options as $key => $value) {
             $this->{$key} = $value;
@@ -179,15 +145,15 @@ class Paginator extends BasePaginator
             return $this->getCurrentPage($currentPage);
         });
 
-        $this->total = $total;
         $this->perPage = $perPage;
-        $this->lastPage = (int)ceil($total / $perPage);
-        $this->currentPage = $this->setCurrentPage($currentPage, $this->lastPage);
+
+        $this->currentPage = $this->setCurrentPage($currentPage);
 
         $this->path = $this->path != '/' ? rtrim($this->path, '/') : Paginator::resolveCurrentPath();
 
-        return $this->items = $items instanceof Collection ? $items : Collection::make($items);
+        $this->setItems($items);
 
+        return $this->items;
     }
 
     /**
@@ -244,20 +210,6 @@ class Paginator extends BasePaginator
     public function withoutQuery()
     {
         $this->withQuery = false;
-
-        return $this;
-    }
-
-    /**
-     * Set pages range proximity
-     *
-     * @param integer $proximity
-     * @return \ThinkMe\Pagination\Paginator
-     */
-    public function pagesProximity($proximity)
-    {
-        $this->pagesProximity = $proximity;
-        $this->pagesRange = null;
 
         return $this;
     }
@@ -423,60 +375,6 @@ class Paginator extends BasePaginator
     public function setRequest(Request $request)
     {
         $this->request = $request;
-    }
-
-    /**
-     * Get pages range to be shown in template
-     *
-     * @return array
-     */
-    public function getPagesRange()
-    {
-
-        if (null !== $this->pagesRange) {
-            return $this->pagesRange;
-        }
-
-        if (null === $this->pagesProximity) {
-            $this->pagesRange = range(1, $this->lastPage());
-        } else {
-            $this->pagesRange = $this->calculatePagesRange();
-        }
-
-        return $this->pagesRange;
-    }
-
-    /**
-     * Calculate pages range for given proximity
-     *
-     * @return array
-     */
-    protected function calculatePagesRange()
-    {
-        $current_page = $this->currentPage();
-        $last_page = $this->lastPage();
-        $start = $current_page - $this->pagesProximity;
-        $end = $current_page + $this->pagesProximity;
-
-        if ($start < 1) {
-            $offset = 1 - $start;
-            $start += $offset;
-            $end += $offset;
-        } else if ($end > $last_page) {
-            $offset = $end - $last_page;
-            $start -= $offset;
-            $end -= $offset;
-        }
-
-        if ($start < 1) {
-            $start = 1;
-        }
-
-        if ($end > $last_page) {
-            $end = $last_page;
-        }
-
-        return range($start, $end);
     }
 
     /**
