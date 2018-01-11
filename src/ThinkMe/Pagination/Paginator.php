@@ -61,6 +61,8 @@ class Paginator extends BasePaginator
 
     protected $pagesRange;
     protected $largePageOptimize = self::PAGE_OPTIMIZE_OFF;
+    protected $optimizeTotalOption = true;
+    protected $optimizeTotalCacheTime = 15;
     protected $largePageOptimizeTotal = 100000;
     protected $largePageOptimizeCurrentPage = 1000;
 
@@ -97,21 +99,35 @@ class Paginator extends BasePaginator
             $this->{$key} = $value;
         }
 
+        $sql = str_replace_array('?', $builder->getQuery()->getBindings(), $builder->getQuery()->toSql());
+
+        $sqlMd5 = 'sql.'. md5($sql);
+
         $total = 0;
 
-        if ($builder instanceof \Illuminate\Database\Eloquent\Builder) {
-            $total = $builder->toBase()->getCountForPagination();
-        }
+        if($this->optimizeTotalOption == true && \Cache::get($sqlMd5) >= $this->largePageOptimizeTotal) {
+            $total = \Cache::get($sqlMd5);
+        } else {
+            if ($builder instanceof \Illuminate\Database\Eloquent\Builder) {
+                $total = $builder->toBase()->getCountForPagination();
+            }
 
-        if ($builder instanceof \Illuminate\Database\Query\Builder) {
-            $total = $builder->getCountForPagination();
+            if ($builder instanceof \Illuminate\Database\Query\Builder) {
+                $total = $builder->getCountForPagination();
+            }
         }
 
         if($this->largePageOptimize == self::PAGE_OPTIMIZE_AUTO) {
-            if($total >= 100000 and $this->getCurrentPage($currentPage) >= 1000) {
+            if($total >= $this->largePageOptimizeTotal and $this->getCurrentPage($currentPage) >= $this->largePageOptimizeCurrentPage) {
                 $this->largePageOptimize = self::PAGE_OPTIMIZE_ON;
             } else {
                 $this->largePageOptimize = self::PAGE_OPTIMIZE_OFF;
+            }
+
+            if($total >= $this->largePageOptimizeTotal) {
+                if($this->optimizeTotalOption == true) {
+                    \Cache::put($sqlMd5, $total, $this->optimizeTotalCacheTime);
+                }
             }
         }
 
@@ -132,12 +148,20 @@ class Paginator extends BasePaginator
         return $this->make($results, $total, $perPage, $currentPage);
     }
 
+    /**
+     * @param $value
+     */
+    public function setOptimizeTotalCacheTime($value)
+    {
+           $this->optimizeTotalCacheTime = $value;
+    }
 
     /**
      * @param $value
      */
-    public function simple($value) {
-        $this->simple = $value;
+    public function setOptimizeTotalOption($value)
+    {
+        $this->optimizeTotalOption = $value;
     }
 
     /**
