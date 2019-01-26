@@ -19,7 +19,7 @@ To `composer.json` add: `"thinkme/pagination": "dev-master"` and then run `compo
 
 This package should not break compatibility with Laravel pagination module.
 
-### Laravel 5.0/5.1/5.2/5.3/5.4
+### Laravel 5.0/5.1/5.2/5.3/5.4/5.5
 
 ## Method overview
 
@@ -122,3 +122,5 @@ Paginator::presenter(function() use ($list) {
 ## License
 
 This package is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT)
+
+
